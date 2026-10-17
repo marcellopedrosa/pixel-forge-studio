@@ -103,3 +103,14 @@ body{margin:0!important}
 .studio-presets-config input,.studio-presets-config select{font-size:13px}
 .studio-presets-config select:disabled{opacity:.65}
 @media(max-width:680px){.studio-presets-layout{grid-template-columns:1fr;overflow:auto}.studio-presets-main{max-height:42vh}.studio-presets-list{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-presets-config{max-height:none}}
+
+/* Strong visual feedback only while the layer is locked */
+.studio .layer-lock.locked{background:#a52a32!important;border-color:#ed4a52!important;color:#fff!important}
+.studio .layer-lock.unlocked{background:transparent!important;border-color:#367d52!important;color:#4ee18b!important}
+/* Preserve exact preview aspect ratios instead of forcing the same rectangle size */
+.studio-presets-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.studio-preset-card{min-height:132px;justify-content:flex-start;gap:5px}
+.studio-preset-preview-box{height:83px;width:100%;display:flex;align-items:center;justify-content:center}
+.studio-preset-preview{display:block;flex:none;border:1px solid #c4c4c4;min-width:0!important;min-height:0!important;max-width:115px;max-height:78px;box-sizing:border-box}
+@media(max-width:850px){.studio-presets-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:550px){.studio-presets-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
