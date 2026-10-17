@@ -33,3 +33,5 @@ body{margin:0!important}
 .studio-layer{cursor:grab}
 .studio-layer.drag-over{outline:2px solid #43a5ff;outline-offset:-2px;background:#24486a}
 @media(max-width:800px){.studio .studio-grid{grid-template-columns:84px minmax(0,1fr) 195px!important}.studio .studio-left{width:84px!important;min-width:84px!important}}
+
+.studio-layer-tree{min-height:34px;gap:3px}.studio-layer-tree button{min-width:26px;padding:4px!important}.studio-layer-tree button:nth-last-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left;white-space:nowrap}.studio-tree-hint{font-size:11px;color:#aebbcf;padding:7px 2px;border-bottom:1px solid #505560}.studio-layer-tree .studio-drag-handle{flex:none;font-size:15px}
