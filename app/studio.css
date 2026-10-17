@@ -83,3 +83,23 @@ body{margin:0!important}
 .studio-dimension-dialog input,.studio-dimension-dialog select{width:100%;margin-top:5px;background:#202733;color:#f8f8f8;border:1px solid #778191;padding:8px;border-radius:5px}
 .studio-dimension-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .studio-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+.studio-presets-dialog{width:min(980px,96vw);padding:0;max-height:92vh;display:flex;flex-direction:column}
+.studio-modal-title{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#292c31;border-bottom:1px solid #585c62}
+.studio-modal-title button{font-size:20px;background:transparent;border:0;padding:2px 8px}
+.studio-presets-layout{display:grid;grid-template-columns:minmax(0,1fr) 315px;min-height:0;overflow:hidden;flex:1}
+.studio-presets-main{overflow:auto;background:#353535;padding:12px}
+.studio-presets-tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:12px}
+.studio-presets-tabs button{border:0;background:transparent;padding:6px}
+.studio-presets-tabs button.active{background:#1d2229}
+.studio-presets-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.studio-preset-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;min-width:0;padding:10px 5px;background:transparent;border:1px solid transparent}
+.studio-preset-card:hover{border-color:#a5b3c0;background:#444950}
+.studio-preset-card strong{font-size:11px;text-align:center}
+.studio-preset-card small{font-size:10px;color:#b8b8b8;text-align:center}
+.studio-preset-preview{border:1px solid #bec1c7;width:min(110px,95%);max-height:76px;min-height:32px;object-fit:contain}
+.studio-presets-config{overflow:auto;padding:14px;background:#444}
+.studio-presets-config label{font-size:12px;color:#cbd3dc}
+.studio-presets-config input,.studio-presets-config select{font-size:13px}
+.studio-presets-config select:disabled{opacity:.65}
+@media(max-width:680px){.studio-presets-layout{grid-template-columns:1fr;overflow:auto}.studio-presets-main{max-height:42vh}.studio-presets-list{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-presets-config{max-height:none}}
