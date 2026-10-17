@@ -145,3 +145,20 @@ body{margin:0!important}
 .studio-document-tabs>button{flex-shrink:0;padding:4px 9px}
 .studio-layers .studio-layer button:nth-child(2){font-size:12px}
 .studio-left input[type=number]{width:100%;min-width:0}
+
+/* Compact layers tree, inspired by classic graphics editors */
+.studio .studio-layers{background:#383a3e}
+.studio .studio-layer,.studio .studio-layer-tree{display:flex;align-items:center;min-height:27px!important;height:27px!important;gap:3px!important;padding-top:0!important;padding-bottom:0!important;border-bottom:1px solid #25272b!important;background:#414347}
+.studio .studio-layer:nth-child(even),.studio .studio-layer-tree:nth-child(even){background:#3d4045}
+.studio .studio-layer.selected,.studio .studio-layer-tree.selected{background:#596979!important}
+.studio .studio-layer.drag-over{box-shadow:inset 0 -2px #8dd6ff}
+.studio .layer-eye,.studio .layer-chevron{background:transparent!important;border:0!important;padding:0!important;min-width:19px!important;width:19px!important;height:24px!important;color:#d0d6dc;flex:none;font-size:13px}
+.studio .layer-chevron{font-size:10px}
+.studio .layer-chevron-spacer{width:19px;flex:none}
+.studio .layer-name{display:flex!important;align-items:center!important;gap:6px!important;flex:1!important;min-width:0!important;white-space:nowrap;text-align:left!important;background:transparent!important;border:0!important;padding:0 3px!important;color:#e5e9ec!important}
+.studio .layer-type{display:flex;justify-content:center;align-items:center;flex:none;width:19px;height:17px;color:#111;background:#e7e9e9;border:1px solid #20252b;font-size:12px;font-weight:bold}
+.studio .layer-type.folder{width:21px;color:#d5d9df;border:0;background:transparent;font-size:20px}
+.studio .layer-type.bitmap{background:repeating-conic-gradient(#ddd 0% 25%,#999 0% 50%) 50% / 8px 8px}
+.studio .layer-type.vector{color:#313c45}
+.studio .layer-text{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.studio .studio-layer .layer-lock,.studio .studio-layer-tree .layer-lock{flex:none;margin-left:auto;padding:2px!important;min-width:28px!important;width:28px!important;height:23px!important}
