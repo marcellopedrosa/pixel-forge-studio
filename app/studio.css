@@ -48,3 +48,14 @@ body{margin:0!important}
 .studio .studio-right .studio-layers{overflow-y:auto!important;flex:none!important}
 .studio-panel-divider{height:24px;flex:none;cursor:row-resize;text-align:center;background:#546477;border-top:2px solid #b9ff31;border-bottom:2px solid #b9ff31;color:#fff;user-select:none;touch-action:none}
 .studio .studio-right #studio-properties{margin-top:10px}
+
+/* Single application header, compact resize handles and variable-width property panel */
+.studio{height:100dvh!important}
+.studio .studio-grid{grid-template-columns:100px minmax(0,1fr) 6px var(--right-panel-width,280px)!important}
+.studio-width-divider{width:6px;min-width:6px;cursor:col-resize;background:#444953;position:relative;touch-action:none}
+.studio-width-divider:hover,.studio-width-divider:active{background:#7d9a9b}
+.studio-panel-divider{height:9px!important;min-height:9px!important;font-size:0!important;background:#444b55!important;border:0!important;border-radius:2px;cursor:row-resize;position:relative;touch-action:none}
+.studio-panel-divider:hover,.studio-panel-divider:active{background:#7d9a9b!important}
+.studio-panel-divider .studio-grip{display:block;width:28px;height:3px;background:#a3aab4;border-radius:3px;position:absolute;left:50%;top:3px;transform:translateX(-50%)}
+.studio .studio-right{padding:10px!important}
+@media(max-width:800px){.studio .studio-grid{grid-template-columns:84px minmax(0,1fr) 6px var(--right-panel-width,210px)!important}}
