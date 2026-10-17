@@ -16,11 +16,11 @@ const menu:Record<string,string[]>={
 "Exibir":["Zoom +","Zoom -","Grade","Réguas"],"Janela":["Camadas","Propriedades"],"Ajuda":["Sobre"]
 };
 const projectPresets:Record<string,{name:string;w:number;h:number}[]>={
- Social:[{name:"FB Page Cover",w:1640,h:664},{name:"FB Event Image",w:1920,h:1080},{name:"FB Group Header",w:1640,h:856},{name:"Instagram",w:1080,h:1080},{name:"Insta Story",w:1080,h:1920},{name:"Insta Portrait",w:1080,h:1350},{name:"YouTube Thumbnail",w:1280,h:720},{name:"YouTube Profile",w:800,h:800},{name:"YouTube Cover",w:2560,h:1440},{name:"X Profile",w:400,h:400}],
+ Social:[{name:"FB Page Cover",w:1640,h:664},{name:"FB Event Image",w:1920,h:1080},{name:"FB Group Header",w:1640,h:856},{name:"Instagram",w:1080,h:1080},{name:"Insta Story",w:1080,h:1920},{name:"Insta Portrait",w:1080,h:1350},{name:"YouTube Thumbnail",w:1280,h:720},{name:"YouTube Profile",w:800,h:800},{name:"YouTube Cover",w:2560,h:1440},{name:"Twitter Profile",w:400,h:400},{name:"Twitter Header",w:1500,h:500}],
  Print:[{name:"A4 300 DPI",w:2480,h:3508},{name:"A3 300 DPI",w:3508,h:4961},{name:"Business Card",w:1050,h:600}],
  Photo:[{name:"Photo 4×6",w:1200,h:1800},{name:"Photo 5×7",w:1500,h:2100},{name:"HD",w:1920,h:1080}],
  Screen:[{name:"HD",w:1280,h:720},{name:"Full HD",w:1920,h:1080},{name:"4K UHD",w:3840,h:2160}],
- Mobile:[{name:"Mobile Portrait",w:1080,h:1920},{name:"Mobile Landscape",w:1920,h:1080}],
+ Mobile:[{name:"Mobile 640×900",w:640,h:900},{name:"Mobile 640×1136",w:640,h:1136},{name:"Mobile 750×1334",w:750,h:1334},{name:"Mobile 1080×1920",w:1080,h:1920},{name:"iPhone X",w:1125,h:2436},{name:"Samsung A5",w:720,h:1280},{name:"Samsung S5",w:1080,h:1920},{name:"Samsung S6",w:1440,h:2560},{name:"Samsung S8+",w:1440,h:2560},{name:"Google Pixel",w:1080,h:1920},{name:"iPad Mini 4",w:1536,h:2048},{name:"iPad Air 2",w:1536,h:2048},{name:"iPad Pro 9.7",w:1536,h:2048},{name:"iPad Pro 10.5",w:1668,h:2224},{name:"iPad Pro 12.9",w:2048,h:2732}],
  Ads:[{name:"Banner",w:728,h:90},{name:"Leaderboard",w:970,h:250},{name:"Square Ad",w:300,h:300}]
 };
 export default function DesignStudio(){
@@ -41,14 +41,15 @@ export default function DesignStudio(){
  const toPixels=(value:string,u:"px"|"cm",resolution:number)=>Math.round(Number(value)*(u==="px"?1:resolution/2.54));
  function openDimensions(){setDraftW(toDisplay(width,unit,dpi));setDraftH(toDisplay(height,unit,dpi));setDimensionsOpen(true)}
  function changeUnit(next:"px"|"cm"){setDraftW(toDisplay(toPixels(draftW,unit,dpi),next,dpi));setDraftH(toDisplay(toPixels(draftH,unit,dpi),next,dpi));setUnit(next)}
- function applyDimensions(){const w=toPixels(draftW,unit,dpi),h=toPixels(draftH,unit,dpi);if(!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1||w>20000||h>20000){setStatus("Dimensões inválidas: 1 a 20.000 px.");return}setWidth(w);setHeight(h);setDimensionsOpen(false);setStatus("Projeto redimensionado: "+w+" × "+h+" px (sem redimensionar objetos)")}
+ function applyDimensions(){const w=toPixels(draftW,unit,dpi),h=toPixels(draftH,unit,dpi);if(!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1||w>20000||h>20000){setStatus("Dimensões inválidas: 1 a 20.000 px.");return}setDirty(true);setWidth(w);setHeight(h);setDimensionsOpen(false);setStatus("Projeto redimensionado: "+w+" × "+h+" px (sem redimensionar objetos)")}
  const [context,setContext]=useState<{x:number;y:number;targetId?:string}|null>(null);
  const layerDragId=useRef<string|null>(null);
  const [dragOverId,setDragOverId]=useState<string|null>(null);
  const [panelHeight,setPanelHeight]=useState(55);
  const [rightWidth,setRightWidth]=useState(280);
  const verticalResize=useRef<{x:number;width:number}|null>(null);
- const [rulers,setRulers]=useState(true);
+ const [rulers,setRulers]=useState(false);
+ const [dirty,setDirty]=useState(false);
  const [guides,setGuides]=useState<{id:string;axis:"x"|"y";position:number}[]>([]);
  const guideDrag=useRef<{id:string;axis:"x"|"y"}|null>(null);
  const surface=useRef<SVGSVGElement>(null),drag=useRef<Drag|null>(null),fileImage=useRef<HTMLInputElement>(null),filePsd=useRef<HTMLInputElement>(null),fileJSON=useRef<HTMLInputElement>(null);
@@ -89,7 +90,7 @@ export default function DesignStudio(){
   </div>
  })}
 
- const snapshot=()=>{setHistory(h=>[...h.slice(-39),structuredClone(items)]);setFuture([])};
+ const snapshot=()=>{setDirty(true);setHistory(h=>[...h.slice(-39),structuredClone(items)]);setFuture([])};
  const apply=(fn:(old:Item[])=>Item[])=>setItems(fn);
  const update=(changes:Partial<Item>)=>apply(old=>old.map(o=>selected.includes(o.id)?{...o,...changes}:o));
  const undo=()=>{if(!history.length)return;setFuture(f=>[items,...f]);setItems(history.at(-1)!);setHistory(h=>h.slice(0,-1))};
@@ -119,15 +120,15 @@ export default function DesignStudio(){
  const svgMarkup=()=>{const source=surface.current?.cloneNode(true) as SVGSVGElement|undefined;if(!source)return "";source.querySelectorAll("[data-selection]").forEach(n=>n.remove());source.setAttribute("xmlns","http://www.w3.org/2000/svg");return new XMLSerializer().serializeToString(source)};
  const exportSvg=()=>triggerDownload("pixelforge.svg",new Blob([svgMarkup()],{type:"image/svg+xml"}));
  const exportPng=()=>{const svg=svgMarkup(),url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"})),img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=width;c.height=height;c.getContext("2d")?.drawImage(img,0,0);c.toBlob(b=>b&&triggerDownload("pixelforge.png",b));URL.revokeObjectURL(url)};img.onerror=()=>{setStatus("Não foi possível rasterizar o SVG.");URL.revokeObjectURL(url)};img.src=url};
- async function openPSD(f?:File){if(!f)return;setStatus("Importando PSD...");try{const d=await importPSD(f);const out:Item[]=flatten(d.layers).filter(l=>l.kind==="bitmap"&&l.image).reverse().map(l=>({...newItem("image",l.left,l.top),id:l.id,name:l.name,x:l.left,y:l.top,w:l.width,h:l.height,opacity:l.opacity,visible:l.visible,locked:l.locked,image:l.image,group:l.id.split("/").slice(0,-1).join("/")}));snapshot();setItems(out);setPsdTree(d.layers);setExpandedGroups(flatten(d.layers).filter(l=>l.kind==="group").map(l=>l.id));setSelected([]);setWidth(d.width);setHeight(d.height);setStatus("PSD: "+out.length+" bitmaps / "+flatten(d.layers).length+" registros / "+d.warnings.length+" avisos")}catch(err){setStatus("Falha ao abrir PSD: "+String(err))}}
- async function openImage(f?:File){if(!f)return;const u=URL.createObjectURL(f);const image=new Image();image.onload=()=>{const o=newItem("image",40,40);o.name=f.name;o.w=image.width;o.h=image.height;o.image=u;snapshot();setItems(a=>[...a,o]);setSelected([o.id]);setStatus("Imagem importada: "+f.name)};image.onerror=()=>setStatus("Erro ao importar imagem");image.src=u}
- async function openJSON(f?:File){if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.items))throw Error("Documento inválido");snapshot();setItems(d.items);setWidth(d.width||1280);setHeight(d.height||720);setStatus("Documento aberto")}catch(e){setStatus(String(e))}}
+ async function openPSD(f?:File){if(!f)return;setStatus("Importando PSD...");try{const d=await importPSD(f);const out:Item[]=flatten(d.layers).filter(l=>l.kind==="bitmap"&&l.image).reverse().map(l=>({...newItem("image",l.left,l.top),id:l.id,name:l.name,x:l.left,y:l.top,w:l.width,h:l.height,opacity:l.opacity,visible:l.visible,locked:l.locked,image:l.image,group:l.id.split("/").slice(0,-1).join("/")}));snapshot();setDirty(true);setItems(out);setPsdTree(d.layers);setExpandedGroups(flatten(d.layers).filter(l=>l.kind==="group").map(l=>l.id));setSelected([]);setWidth(d.width);setHeight(d.height);setStatus("PSD: "+out.length+" bitmaps / "+flatten(d.layers).length+" registros / "+d.warnings.length+" avisos")}catch(err){setStatus("Falha ao abrir PSD: "+String(err))}}
+ async function openImage(f?:File){if(!f)return;const u=URL.createObjectURL(f);const image=new Image();image.onload=()=>{const o=newItem("image",40,40);o.name=f.name;o.w=image.width;o.h=image.height;o.image=u;snapshot();setDirty(true);setItems(a=>[...a,o]);setSelected([o.id]);setStatus("Imagem importada: "+f.name)};image.onerror=()=>setStatus("Erro ao importar imagem");image.src=u}
+ async function openJSON(f?:File){if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.items))throw Error("Documento inválido");snapshot();setDirty(false);setItems(d.items);setWidth(d.width||1280);setHeight(d.height||720);setStatus("Documento aberto")}catch(e){setStatus(String(e))}}
  const run=(action:string)=>{setOpenMenu(null);if(action==="Abrir PSD em camadas")filePsd.current?.click();
  else if(action==="Abrir imagem")fileImage.current?.click();else if(action==="Abrir JSON")fileJSON.current?.click();
  else if(action==="Dimensões do projeto")openDimensions();
  else if(action==="Novo projeto"){snapshot();setItems([]);setPsdTree([]);setSelected([])}
  else if(action==="Exportar SVG")exportSvg();else if(action==="Exportar PNG")exportPng();
- else if(action==="Salvar JSON")triggerDownload("pixelforge.json",new Blob([JSON.stringify({width,height,items},null,2)],{type:"application/json"}));
+ else if(action==="Salvar JSON"){triggerDownload("pixelforge.json",new Blob([JSON.stringify({width,height,items},null,2)],{type:"application/json"}));setDirty(false)}
  else if(action==="Desfazer")undo();else if(action==="Refazer")redo();
  else if(action==="Excluir"){snapshot();setItems(old=>old.filter(o=>!selected.includes(o.id)));setSelected([])}
  else if(action==="Duplicar"){snapshot();setItems(old=>[...old,...old.filter(o=>selected.includes(o.id)).map(o=>({...o,id:id(),name:o.name+" cópia",x:o.x+20,y:o.y+20}))])}
@@ -145,7 +146,8 @@ export default function DesignStudio(){
  else if(action==="Zoom +")setZoom(z=>Math.min(300,z+15));else if(action==="Zoom -")setZoom(z=>Math.max(15,z-15));else if(action==="Grade")setGrid(g=>!g);
  else {const vals:Record<string,string>={"Escala de cinza":filters[1],"Sépia":filters[2],"Desfoque":filters[3],"Inverter":filters[4],"Contraste":filters[5],"Brilho":filters[6],"Saturação":filters[7],"Remover filtro":"none"};if(vals[action]){snapshot();update({filter:vals[action]})}}
  };
- useEffect(()=>{const fn=(e:KeyboardEvent)=>{if(["INPUT","TEXTAREA","SELECT"].includes((e.target as HTMLElement).tagName))return;const ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}else if(e.key==="Delete"){run("Excluir")}else if(!ctrl&&!e.altKey&&(e.key==="+"||e.key==="="||e.key==="-")){e.preventDefault();setZoom(z=>Math.max(20,Math.min(160,z+(e.key==="-"?-10:10))))}else if(!ctrl){const map:Record<string,string>={v:"select",r:"rect",o:"ellipse",l:"line",t:"text",p:"path"};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])}};window.addEventListener("keydown",fn);return()=>window.removeEventListener("keydown",fn)});
+ useEffect(()=>{const fn=(e:KeyboardEvent)=>{if(e.key==="Escape"){e.preventDefault();setDimensionsOpen(false);setContext(null);setOpenMenu(null);setSelected([]);setTool("select");return}if(["INPUT","TEXTAREA","SELECT"].includes((e.target as HTMLElement).tagName))return;const ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}else if(e.key==="Delete"){run("Excluir")}else if(!ctrl&&!e.altKey&&(e.key==="+"||e.key==="="||e.key==="-")){e.preventDefault();setZoom(z=>Math.max(20,Math.min(160,z+(e.key==="-"?-10:10))))}else if(!ctrl){const map:Record<string,string>={v:"select",r:"rect",o:"ellipse",l:"line",t:"text",p:"path"};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])}};window.addEventListener("keydown",fn);return()=>window.removeEventListener("keydown",fn)});
+ useEffect(()=>{const beforeUnload=(e:BeforeUnloadEvent)=>{if(!dirty)return;e.preventDefault();e.returnValue=""};window.addEventListener("beforeunload",beforeUnload);return()=>window.removeEventListener("beforeunload",beforeUnload)},[dirty]);
  const shape=(o:Item)=>{const props={fill:o.fill,stroke:o.stroke,strokeWidth:o.strokeWidth};switch(o.kind){case "rect":return <rect width={o.w} height={o.h} {...props}/>;case "ellipse":return <ellipse cx={o.w/2} cy={o.h/2} rx={o.w/2} ry={o.h/2} {...props}/>;case "line":return <line x1={0} y1={0} x2={o.w} y2={o.h} {...props}/>;case "text":return <text x={0} y={o.fontSize||40} fill={o.fill} fontSize={o.fontSize||40} fontFamily="Arial">{o.text||"Texto"}</text>;case "image":return <image width={o.w} height={o.h} href={o.image} preserveAspectRatio="none"/>;case "path":return <polyline points={(o.points||[]).map(p=>p.x+","+p.y).join(" ")} fill="none" stroke={o.strokeWidth?o.stroke:o.fill} strokeWidth={Math.max(2,o.strokeWidth)}/>}}
  return <div className="studio">
  <nav className="studio-menu"><b>PixelForge Studio</b>{Object.keys(menu).map(m=><div key={m} className="menu-wrap"><button className="menu-label" onClick={()=>setOpenMenu(x=>x===m?null:m)}>{m}</button>{openMenu===m&&<div className="menu-popup">{menu[m].map(cmd=><button key={cmd} onClick={()=>run(cmd)}>{cmd}</button>)}</div>}</div>)}<span style={{marginLeft:"auto"}}>{status}</span></nav>
@@ -158,7 +160,7 @@ export default function DesignStudio(){
  <div className="studio-modal-title"><strong>Dimensões do projeto</strong><button title="Fechar" onClick={()=>setDimensionsOpen(false)}>×</button></div>
  <div className="studio-presets-layout">
   <div className="studio-presets-main"><div className="studio-presets-tabs">{Object.keys(projectPresets).map(cat=><button key={cat} className={presetCategory===cat?"active":""} onClick={()=>setPresetCategory(cat)}>{cat}</button>)}</div>
-   <div className="studio-presets-list">{projectPresets[presetCategory].map(p=><button key={p.name} className="studio-preset-card" onClick={()=>{setUnit("px");setDraftW(String(p.w));setDraftH(String(p.h))}}><span className="studio-preset-preview" style={{aspectRatio:p.w+"/"+p.h}}/><strong>{p.name}</strong><small>{p.w} × {p.h} px</small></button>)}</div>
+   <div className="studio-presets-list">{projectPresets[presetCategory].map(p=><button key={p.name} className="studio-preset-card" onClick={()=>{setUnit("px");setDraftW(String(p.w));setDraftH(String(p.h))}}><span className="studio-preset-preview-box"><span className="studio-preset-preview" style={{width:(p.w/Math.max(p.w,p.h))*100+"%",height:(p.h/Math.max(p.w,p.h))*100+"%"}}/></span><strong>{p.name}</strong><small>{p.w} × {p.h} px</small></button>)}</div>
   </div>
   <div className="studio-presets-config">
    <label>Nome<input value={projectName} onChange={e=>setProjectName(e.target.value)}/></label>
