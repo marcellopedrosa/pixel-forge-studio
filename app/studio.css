@@ -136,3 +136,12 @@ body{margin:0!important}
 .studio-floating-horizontal>.studio-nums input{height:30px;font-size:12px}
 .studio-floating-horizontal>button{height:30px;align-self:end}
 @media(max-width:650px){.studio-floating-properties{width:calc(100vw - 24px);max-height:55vh}.studio-floating-horizontal>label{min-width:100px}}
+
+.studio-document-tabs{display:flex;align-items:center;gap:4px;background:#20242b;border-bottom:1px solid #444b56;padding:4px 8px;min-height:34px;overflow-x:auto;flex-shrink:0}
+.studio-document-tab{display:flex;align-items:center;background:#343942;border:1px solid #484e58;border-radius:5px;white-space:nowrap}
+.studio-document-tab.active{background:#42617d;border-color:#629fe0}
+.studio-document-tab button{background:transparent;border:0;padding:4px 8px}
+.studio-document-tab button:last-child{font-size:15px;padding:3px 7px}
+.studio-document-tabs>button{flex-shrink:0;padding:4px 9px}
+.studio-layers .studio-layer button:nth-child(2){font-size:12px}
+.studio-left input[type=number]{width:100%;min-width:0}
