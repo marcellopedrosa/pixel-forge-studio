@@ -13,7 +13,7 @@ const menu:Record<string,string[]>={
 "Arquivo":["Novo projeto","Dimensões do projeto","Abrir imagem","Abrir PSD em camadas","Exportar PNG","Exportar SVG","Salvar JSON","Abrir JSON"],
 "Editar":["Desfazer","Refazer","Duplicar","Excluir","Agrupar","Desagrupar","Selecionar tudo"],
 "Imagem":["Escala de cinza","Sépia","Inverter","Brilho","Contraste","Remover filtro"],
-"Camada":["Nova camada","Mover para frente","Mover para trás","Bloquear","Ocultar","Duplicar","Excluir"],
+"Camada":["Nova camada","Avançar uma camada","Recuar uma camada","Mover para frente","Mover para trás","Bloquear","Ocultar","Duplicar","Excluir"],
 "Selecionar":["Todos","Limpar seleção"],"Filtro":["Escala de cinza","Sépia","Desfoque","Inverter","Contraste","Brilho","Saturação","Remover filtro"],
 "Exibir":["Zoom +","Zoom -","Grade","Réguas"],"Janela":["Camadas","Propriedades"],"Ajuda":["Sobre"]
 };
@@ -191,6 +191,7 @@ export default function DesignStudio(){
  else if(action==="Propriedades")setPropertiesVisible(true);
  else if(action==="Bloquear"){snapshot();update({locked:true})}
  else if(action==="Ocultar"){snapshot();update({visible:false})}
+ else if(action==="Avançar uma camada"||action==="Recuar uma camada"){const step=action==="Avançar uma camada"?1:-1;const active=selected[0];const index=items.findIndex(i=>i.id===active);const target=index+step;if(index>=0&&target>=0&&target<items.length){snapshot();setItems(old=>{const a=[...old];[a[index],a[target]]=[a[target],a[index]];return a});setStatus(action+" — "+items[index].name)}}
  else if(action==="Mover para frente"){snapshot();apply(old=>[...old.filter(o=>!selected.includes(o.id)),...old.filter(o=>selected.includes(o.id))])}
  else if(action==="Mover para trás"){snapshot();apply(old=>[...old.filter(o=>selected.includes(o.id)),...old.filter(o=>!selected.includes(o.id))])}
  else if(action==="Nova camada"){snapshot();apply(old=>[...old,newItem("rect",80,80)])}
@@ -232,7 +233,7 @@ export default function DesignStudio(){
  </div></div></div>}
  {context&&<><div className="studio-context-backdrop" onClick={()=>setContext(null)} onContextMenu={e=>{e.preventDefault();setContext(null)}}/><div className="studio-context-menu" role="menu" style={{left:context.x,top:context.y}}>
   <div className="studio-context-title">{context.targetId?"Objeto selecionado":"Prancheta"}</div>
-  {(context.targetId?["Propriedades","Duplicar","Agrupar","Desagrupar","Mover para frente","Mover para trás","Bloquear","Ocultar","Escala de cinza","Desfoque","Remover filtro","Excluir"]:region?["Cortar seleção","Limpar seleção"]:["Selecionar tudo","Abrir imagem","Abrir PSD em camadas","Nova camada","Grade"]).map(cmd=><button key={cmd} role="menuitem" onClick={()=>{setContext(null);run(cmd)}}>{cmd}</button>)}
+  {(context.targetId?["Propriedades","Duplicar","Agrupar","Desagrupar","Avançar uma camada","Recuar uma camada","Mover para frente","Mover para trás","Bloquear","Ocultar","Escala de cinza","Desfoque","Remover filtro","Excluir"]:region?["Cortar seleção","Limpar seleção"]:["Selecionar tudo","Abrir imagem","Abrir PSD em camadas","Nova camada","Grade"]).map(cmd=><button key={cmd} role="menuitem" onClick={()=>{setContext(null);run(cmd)}}>{cmd}</button>)}
  </div></>}
  </div>
 }
