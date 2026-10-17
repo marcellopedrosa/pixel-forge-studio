@@ -74,3 +74,12 @@ body{margin:0!important}
 /* Layer lock semantic colors, independent of PSD import */
 .studio .layer-lock.locked{color:#ff5555!important;border-color:#a33c3c!important}
 .studio .layer-lock.unlocked{color:#4ee18b!important;border-color:#367d52!important}
+
+
+.studio-modal-backdrop{position:fixed;inset:0;background:#0009;z-index:300;display:flex;align-items:center;justify-content:center;padding:15px}
+.studio-dimension-dialog{background:#343943;border:1px solid #667285;border-radius:10px;padding:20px;width:min(420px,100%);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #0009}
+.studio-dimension-dialog h3{font-size:17px;margin:0 0 16px}
+.studio-dimension-dialog label{display:block;margin:9px 0}
+.studio-dimension-dialog input,.studio-dimension-dialog select{width:100%;margin-top:5px;background:#202733;color:#f8f8f8;border:1px solid #778191;padding:8px;border-radius:5px}
+.studio-dimension-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.studio-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
