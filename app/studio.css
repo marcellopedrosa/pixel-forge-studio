@@ -18,3 +18,18 @@ html,body{max-width:100%;overflow-x:hidden}
 .studio-context-menu button{display:block;width:100%;text-align:left;background:transparent;border:0;padding:8px 10px;color:#f5f5f5}
 .studio-context-menu button:hover{background:#28619a}
 @media(max-width:800px){.studio-grid{grid-template-columns:76px minmax(0,1fr) 195px}.studio-left{width:76px;padding:5px}}
+
+/* Layout isolation: do not let generic main/aside rules shift the toolbar offscreen */
+body{margin:0!important}
+.appmode{width:100%;min-height:48px}
+.studio{height:calc(100dvh - 48px)!important;min-height:0!important;max-width:100vw;position:relative;margin:0!important}
+.studio .studio-grid{display:grid!important;grid-template-columns:100px minmax(0,1fr) 265px!important;gap:0!important;width:100%!important;max-width:100%!important;height:100%;min-height:0!important;margin:0!important;padding:0!important;position:relative;left:0!important;transform:none!important;overflow:hidden}
+.studio .studio-left{display:block!important;position:relative!important;left:0!important;transform:none!important;width:100px!important;min-width:100px!important;margin:0!important;padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box}
+.studio .studio-left .tool-group{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;width:100%!important}
+.studio .studio-left .tool-group button{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow:visible}
+.studio .studio-stage{display:block!important;min-height:0!important;min-width:0!important;margin:0!important;padding:20px!important;overflow:auto!important}
+.studio .studio-right{margin:0!important;min-width:0!important;overflow:auto!important}
+.studio-drag-handle{cursor:grab;user-select:none;color:#bdc7d8;padding:0 2px;font-size:18px}
+.studio-layer{cursor:grab}
+.studio-layer.drag-over{outline:2px solid #43a5ff;outline-offset:-2px;background:#24486a}
+@media(max-width:800px){.studio .studio-grid{grid-template-columns:84px minmax(0,1fr) 195px!important}.studio .studio-left{width:84px!important;min-width:84px!important}}
