@@ -24,3 +24,25 @@ Esta publicação é uma implementação inicial simplificada: não reproduz tod
 
 ## Próxima prioridade
 Validar o PSD de referência com screenshots em CI, tratar camadas sem pixel, máscaras e modos de composição.
+
+
+## Ambientes de execução
+
+### Desenvolvimento na nuvem — GitHub Codespaces
+
+1. Acesse [criar Codespace](https://github.com/codespaces/new?repo=1422752405&ref=main).
+2. Aguarde o `postCreateCommand` instalar as dependências com `npm install`.
+3. No terminal, execute `npm run dev -- --hostname 0.0.0.0`.
+4. Abra a porta **3000** pelo painel **Ports**. O encaminhamento é privado por padrão.
+
+Configuração em `.devcontainer/devcontainer.json` (Node.js 22).
+
+### Homologação estática — GitHub Pages
+
+O workflow `.github/workflows/pages.yml` executa `npm install`, `npm test`, `npm run build` e envia `out/` para o GitHub Pages.
+
+**Configuração necessária uma única vez:** em [Settings → Pages](https://github.com/marcellopedrosa/pixel-forge-studio/settings/pages), selecione **GitHub Actions** no campo **Source**, não **Deploy from a branch**. Sem isso, o deployment pode falhar com HTTP 404 mesmo depois de um build bem-sucedido.
+
+URL esperada após deployment bem-sucedido: https://marcellopedrosa.github.io/pixel-forge-studio/
+
+> GitHub Pages não executa `npm run dev` ou servidores Node.js. Para desenvolvimento, use Codespaces.
