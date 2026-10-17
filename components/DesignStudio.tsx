@@ -46,7 +46,7 @@ export default function DesignStudio(){
  const layerDragId=useRef<string|null>(null);
  const [dragOverId,setDragOverId]=useState<string|null>(null);
  const [propertiesVisible,setPropertiesVisible]=useState(true);
- const [propertiesPosition,setPropertiesPosition]=useState({x:70,y:65});
+ const [propertiesPosition,setPropertiesPosition]=useState({x:160,y:190});
  const floatingDrag=useRef<{x:number;y:number;startX:number;startY:number}|null>(null);
  const [rightWidth,setRightWidth]=useState(280);
  const verticalResize=useRef<{x:number;width:number}|null>(null);
