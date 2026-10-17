@@ -70,3 +70,7 @@ body{margin:0!important}
 .studio-guide-x{top:25px;bottom:0;width:5px;transform:translateX(-2px);cursor:col-resize;border-left:1px solid #b9ff31;background:#b9ff3130}
 .studio-guide-y{left:25px;right:0;height:5px;transform:translateY(-2px);cursor:row-resize;border-top:1px solid #b9ff31;background:#b9ff3130}
 .studio-guide:hover{background:#b9ff3170}
+
+/* Layer lock semantic colors, independent of PSD import */
+.studio .layer-lock.locked{color:#ff5555!important;border-color:#a33c3c!important}
+.studio .layer-lock.unlocked{color:#4ee18b!important;border-color:#367d52!important}
