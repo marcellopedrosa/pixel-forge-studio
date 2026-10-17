@@ -1,0 +1,25 @@
+{
+  "name": "PixelForge Studio - Next.js",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [
+    3000
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "PixelForge Studio (Next.js)",
+      "onAutoForward": "openPreview",
+      "visibility": "private"
+    }
+  },
+  "postCreateCommand": "npm install --no-audit --no-fund",
+  "postStartCommand": "echo 'Execute npm run dev -- --hostname 0.0.0.0 para iniciar o PixelForge Studio.'",
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
