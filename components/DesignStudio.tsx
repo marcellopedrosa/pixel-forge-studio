@@ -3,6 +3,8 @@ import {useEffect,useRef,useState} from "react";
 import {flatten,importPSD,type Layer} from "../lib/psd-import";
 type Kind="rect"|"ellipse"|"line"|"text"|"image"|"path";
 type Item={id:string;kind:Kind;name:string;x:number;y:number;w:number;h:number;fill:string;stroke:string;strokeWidth:number;opacity:number;visible:boolean;locked:boolean;angle:number;text?:string;fontSize?:number;image?:string;filter:string;fade?:string;group?:string;points?:{x:number;y:number}[]};
+type Region={x:number;y:number;w:number;h:number;shape:"rectangle"|"ellipse"};
+type DocumentState={id:string;name:string;items:Item[];psdTree:Layer[];width:number;height:number;selected:string[];zoom:number;guides:{id:string;axis:"x"|"y";position:number}[]};
 type Drag={id?:string;x:number;y:number;ox:number;oy:number;drawing:boolean};
 const id=()=>crypto.randomUUID();
 const newItem=(kind:Kind,x:number,y:number):Item=>({id:id(),kind,name:kind,x,y,w:1,h:1,fill:"#ff7c00",stroke:"#ffffff",strokeWidth:0,opacity:1,visible:true,locked:false,angle:0,filter:"none",fade:"none"});
@@ -25,6 +27,19 @@ const projectPresets:Record<string,{name:string;w:number;h:number}[]>={
 };
 export default function DesignStudio(){
  const [items,setItems]=useState<Item[]>([]);
+ const [documents,setDocuments]=useState<{id:string;name:string}[]>([{id:"initial",name:"Novo projeto"}]);
+ const [activeDoc,setActiveDoc]=useState("initial");
+ const savedDocs=useRef<Record<string,DocumentState>>({});
+ const [region,setRegion]=useState<Region|null>(null);
+ const regionStart=useRef<{x:number;y:number}|null>(null);
+ const [wandTolerance,setWandTolerance]=useState(28);
+ const [clipboard,setClipboard]=useState<Item[]>([]);
+ function captureDoc(documentId:string,name:string):DocumentState{return {id:documentId,name,items:structuredClone(items),psdTree:structuredClone(psdTree),width,height,selected:[...selected],zoom,guides:structuredClone(guides)}}
+ function restoreDoc(d:DocumentState){setItems(d.items);setPsdTree(d.psdTree);setWidth(d.width);setHeight(d.height);setSelected(d.selected);setZoom(d.zoom);setGuides(d.guides);setRegion(null);setHistory([]);setFuture([]);setDirty(false)}
+ function switchDocument(next:string){if(next===activeDoc)return;const current=documents.find(d=>d.id===activeDoc);savedDocs.current[activeDoc]=captureDoc(activeDoc,current?.name||"Documento");const target=savedDocs.current[next];if(target)restoreDoc(target);setActiveDoc(next)}
+ function newDocument(name="Novo projeto"){const current=documents.find(d=>d.id===activeDoc);savedDocs.current[activeDoc]=captureDoc(activeDoc,current?.name||"Documento");const docId=id();setDocuments(d=>[...d,{id:docId,name}]);setActiveDoc(docId);restoreDoc({id:docId,name,items:[],psdTree:[],width:1280,height:720,selected:[],zoom:65,guides:[]})}
+ function closeDocument(target:string){if(documents.length===1){setItems([]);setSelected([]);setDocuments([{id:"initial",name:"Novo projeto"}]);setActiveDoc("initial");savedDocs.current={};return}const remaining=documents.filter(d=>d.id!==target);if(target===activeDoc){const next=remaining[remaining.length-1];if(savedDocs.current[next.id])restoreDoc(savedDocs.current[next.id]);setActiveDoc(next.id)}delete savedDocs.current[target];setDocuments(remaining)}
+
  const [psdTree,setPsdTree]=useState<Layer[]>([]);
  const [expandedGroups,setExpandedGroups]=useState<string[]>([]);
  const [selected,setSelected]=useState<string[]>([]);
@@ -100,6 +115,9 @@ export default function DesignStudio(){
  const redo=()=>{if(!future.length)return;setHistory(h=>[...h,items]);setItems(future[0]);setFuture(f=>f.slice(1))};
  const point=(e:React.PointerEvent)=>{const rect=surface.current!.getBoundingClientRect();return {x:(e.clientX-rect.left)*width/rect.width,y:(e.clientY-rect.top)*height/rect.height}};
  function pointerDown(e:React.PointerEvent){setContext(null);if(e.button!==0)return;const p=point(e);
+  if(tool==="rect-select"||tool==="ellipse-select"){regionStart.current=p;setRegion({x:p.x,y:p.y,w:0,h:0,shape:tool==="rect-select"?"rectangle":"ellipse"});surface.current?.setPointerCapture(e.pointerId);return}
+  if(tool==="wand"){const target=(e.target as Element).closest("[data-object]");const targetId=target?.getAttribute("data-object");if(targetId){setSelected([targetId]);setPropertiesVisible(true);setStatus("Varinha: objeto encontrado; tolerância "+wandTolerance+". Seleção regional por cor ainda é aproximada.")}return}
+ 
   const handleNode=(e.target as Element).closest("[data-transform]");
   if(tool==="select"&&handleNode){setPropertiesVisible(true);const handle=handleNode.getAttribute("data-transform")||"";const objectId=handleNode.getAttribute("data-id")||"";const obj=items.find(i=>i.id===objectId);if(obj&&!obj.locked){e.stopPropagation();snapshot();transform.current={id:objectId,handle,initial:{...obj},startX:p.x,startY:p.y};surface.current?.setPointerCapture(e.pointerId)}return}
  const target=(e.target as Element).closest("[data-object]");const targetId=target?.getAttribute("data-object");
@@ -110,7 +128,7 @@ export default function DesignStudio(){
   if(tool==="eraser"){if(targetId){snapshot();apply(old=>old.filter(o=>o.id!==targetId))}return}
   if(["rect","ellipse","line","path"].includes(tool)){snapshot();const obj=newItem(tool as Kind,p.x,p.y);if(tool==="path")obj.points=[{x:0,y:0}];apply(old=>[...old,obj]);setSelected([obj.id]);drag.current={id:obj.id,x:p.x,y:p.y,ox:p.x,oy:p.y,drawing:true};surface.current?.setPointerCapture(e.pointerId)}
  }
- function pointerMove(e:React.PointerEvent){const t=transform.current;
+ function pointerMove(e:React.PointerEvent){if(regionStart.current){const p=point(e),a=regionStart.current;setRegion({x:Math.min(a.x,p.x),y:Math.min(a.y,p.y),w:Math.abs(a.x-p.x),h:Math.abs(a.y-p.y),shape:tool==="ellipse-select"?"ellipse":"rectangle"});return}const t=transform.current;
  if(t){const p=point(e),o=t.initial;const rad=-o.angle*Math.PI/180,dx=p.x-t.startX,dy=p.y-t.startY;
   const localX=dx*Math.cos(rad)-dy*Math.sin(rad),localY=dx*Math.sin(rad)+dy*Math.cos(rad);
   if(t.handle==="rotate"){const cx=o.x+o.w/2,cy=o.y+o.h/2;const a=Math.atan2(t.startY-cy,t.startX-cx),b=Math.atan2(p.y-cy,p.x-cx);const angle=o.angle+(b-a)*180/Math.PI;setItems(old=>old.map(i=>i.id===t.id?{...i,angle:Math.round(angle)}:i));return}
@@ -133,7 +151,7 @@ export default function DesignStudio(){
   if(d.id)apply(old=>old.map(o=>o.id===d.id?{...o,x:d.ox+p.x-d.x,y:d.oy+p.y-d.y}:o));
  }
  function reorderLayers(sourceId:string,targetId:string){if(sourceId===targetId)return;if(findNode(sourceId)||findNode(targetId)){reorderPsdNodes(sourceId,targetId);return}const from=items.findIndex(i=>i.id===sourceId),to=items.findIndex(i=>i.id===targetId);if(from<0||to<0)return;snapshot();setItems(current=>{const next=[...current];const source=next.findIndex(i=>i.id===sourceId),dest=next.findIndex(i=>i.id===targetId);if(source<0||dest<0)return current;const [layer]=next.splice(source,1);next.splice(dest,0,layer);return next});setSelected([sourceId]);setStatus("Ordem das camadas atualizada")}
- const stop=()=>{drag.current=null;transform.current=null};
+ const stop=()=>{drag.current=null;transform.current=null;regionStart.current=null};
  function showContext(e:React.MouseEvent,targetId?:string){e.preventDefault();e.stopPropagation();
   const objId=targetId||(e.target as Element).closest("[data-object]")?.getAttribute("data-object")||undefined;
   if(objId){setPropertiesVisible(true);if(!selected.includes(objId))setSelected([objId])}
@@ -144,13 +162,20 @@ export default function DesignStudio(){
  const svgMarkup=()=>{const source=surface.current?.cloneNode(true) as SVGSVGElement|undefined;if(!source)return "";source.querySelectorAll("[data-selection]").forEach(n=>n.remove());source.setAttribute("xmlns","http://www.w3.org/2000/svg");return new XMLSerializer().serializeToString(source)};
  const exportSvg=()=>triggerDownload("pixelforge.svg",new Blob([svgMarkup()],{type:"image/svg+xml"}));
  const exportPng=()=>{const svg=svgMarkup(),url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"})),img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=width;c.height=height;c.getContext("2d")?.drawImage(img,0,0);c.toBlob(b=>b&&triggerDownload("pixelforge.png",b));URL.revokeObjectURL(url)};img.onerror=()=>{setStatus("Não foi possível rasterizar o SVG.");URL.revokeObjectURL(url)};img.src=url};
- async function openPSD(f?:File){if(!f)return;setStatus("Importando PSD...");try{const d=await importPSD(f);const out:Item[]=flatten(d.layers).filter(l=>l.kind==="bitmap"&&l.image).reverse().map(l=>({...newItem("image",l.left,l.top),id:l.id,name:l.name,x:l.left,y:l.top,w:l.width,h:l.height,opacity:l.opacity,visible:l.visible,locked:l.locked,image:l.image,group:l.id.split("/").slice(0,-1).join("/")}));snapshot();setDirty(true);setItems(out);setPsdTree(d.layers);setExpandedGroups(flatten(d.layers).filter(l=>l.kind==="group").map(l=>l.id));setSelected([]);setWidth(d.width);setHeight(d.height);setStatus("PSD: "+out.length+" bitmaps / "+flatten(d.layers).length+" registros / "+d.warnings.length+" avisos")}catch(err){setStatus("Falha ao abrir PSD: "+String(err))}}
+ async function openPSD(f?:File){if(!f)return;setStatus("Importando PSD...");try{const d=await importPSD(f);const out:Item[]=flatten(d.layers).filter(l=>l.kind==="bitmap"&&l.image).reverse().map(l=>({...newItem("image",l.left,l.top),id:l.id,name:l.name,x:l.left,y:l.top,w:l.width,h:l.height,opacity:l.opacity,visible:l.visible,locked:l.locked,image:l.image,group:l.id.split("/").slice(0,-1).join("/")}));snapshot();setDirty(true);setItems(out);setPsdTree(d.layers);setDocuments(ds=>ds.map(d=>d.id===activeDoc?{...d,name:f.name}:d));setExpandedGroups(flatten(d.layers).filter(l=>l.kind==="group").map(l=>l.id));setSelected([]);setWidth(d.width);setHeight(d.height);setStatus("PSD: "+out.length+" bitmaps / "+flatten(d.layers).length+" registros / "+d.warnings.length+" avisos")}catch(err){setStatus("Falha ao abrir PSD: "+String(err))}}
  async function openImage(f?:File){if(!f)return;const u=URL.createObjectURL(f);const image=new Image();image.onload=()=>{const o=newItem("image",40,40);o.name=f.name;o.w=image.width;o.h=image.height;o.image=u;snapshot();setDirty(true);setItems(a=>[...a,o]);setSelected([o.id]);setStatus("Imagem importada: "+f.name)};image.onerror=()=>setStatus("Erro ao importar imagem");image.src=u}
- async function openJSON(f?:File){if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.items))throw Error("Documento inválido");snapshot();setDirty(false);setItems(d.items);setWidth(d.width||1280);setHeight(d.height||720);setStatus("Documento aberto")}catch(e){setStatus(String(e))}}
- const run=(action:string)=>{setOpenMenu(null);if(action==="Abrir PSD em camadas")filePsd.current?.click();
+ async function openJSON(f?:File){if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.items))throw Error("Documento inválido");snapshot();setDirty(false);setItems(d.items);setDocuments(ds=>ds.map(d=>d.id===activeDoc?{...d,name:f.name}:d));setWidth(d.width||1280);setHeight(d.height||720);setStatus("Documento aberto")}catch(e){setStatus(String(e))}}
+ async function cutRegion(){if(!region||region.w<2||region.h<2){setStatus("Selecione uma região primeiro.");return}const target=items.find(i=>i.id===selected[0])||[...items].reverse().find(i=>i.kind==="image"&&i.visible&&!i.locked);if(!target||!target.image){setStatus("Selecione uma camada bitmap para recortar a região.");return}
+ const cropX=Math.max(0,Math.round(region.x-target.x)),cropY=Math.max(0,Math.round(region.y-target.y));const cropW=Math.max(1,Math.min(target.w-cropX,Math.round(region.w))),cropH=Math.max(1,Math.min(target.h-cropY,Math.round(region.h)));if(cropW<1||cropH<1)return;
+ const image=new Image();image.onload=()=>{const canvas=document.createElement("canvas");canvas.width=cropW;canvas.height=cropH;const context=canvas.getContext("2d");if(!context)return;if(region.shape==="ellipse"){context.beginPath();context.ellipse(cropW/2,cropH/2,cropW/2,cropH/2,0,0,2*Math.PI);context.clip()}context.drawImage(image,0,0,image.naturalWidth,image.naturalHeight,0,0,target.w,target.h);const pixels=context.getImageData(cropX,cropY,cropW,cropH);context.clearRect(0,0,cropW,cropH);context.putImageData(pixels,0,0);snapshot();const layer={...target,id:id(),name:target.name+" — recorte",x:target.x+cropX,y:target.y+cropY,w:cropW,h:cropH,image:canvas.toDataURL("image/png")};setItems(old=>[...old,layer]);setSelected([layer.id]);setRegion(null);setStatus("Recorte criado em nova camada")};image.onerror=()=>setStatus("Não foi possível ler pixels desta imagem.");image.src=target.image;
+ }
+ const run=(action:string)=>{setOpenMenu(null);if(action==="Cortar seleção"){void cutRegion()}
+ else if(action==="Copiar objetos"){setClipboard(items.filter(i=>selected.includes(i.id)).map(i=>structuredClone(i)))}
+ else if(action==="Colar objetos"){snapshot();const next=clipboard.map(i=>({...i,id:id(),x:i.x+20,y:i.y+20}));setItems(old=>[...old,...next]);setSelected(next.map(i=>i.id))}
+ else if(action==="Abrir PSD em camadas")filePsd.current?.click();
  else if(action==="Abrir imagem")fileImage.current?.click();else if(action==="Abrir JSON")fileJSON.current?.click();
  else if(action==="Dimensões do projeto")openDimensions();
- else if(action==="Novo projeto"){snapshot();setItems([]);setPsdTree([]);setSelected([])}
+ else if(action==="Novo projeto"){newDocument()}
  else if(action==="Exportar SVG")exportSvg();else if(action==="Exportar PNG")exportPng();
  else if(action==="Salvar JSON"){triggerDownload("pixelforge.json",new Blob([JSON.stringify({width,height,items},null,2)],{type:"application/json"}));setDirty(false)}
  else if(action==="Desfazer")undo();else if(action==="Refazer")redo();
@@ -170,7 +195,7 @@ export default function DesignStudio(){
  else if(action==="Zoom +")setZoom(z=>Math.min(300,z+15));else if(action==="Zoom -")setZoom(z=>Math.max(15,z-15));else if(action==="Grade")setGrid(g=>!g);
  else {const vals:Record<string,string>={"Escala de cinza":filters[1],"Sépia":filters[2],"Desfoque":filters[3],"Inverter":filters[4],"Contraste":filters[5],"Brilho":filters[6],"Saturação":filters[7],"Remover filtro":"none"};if(vals[action]){snapshot();update({filter:vals[action]})}}
  };
- useEffect(()=>{const fn=(e:KeyboardEvent)=>{if(e.key==="Escape"){e.preventDefault();setDimensionsOpen(false);setContext(null);setOpenMenu(null);setSelected([]);setTool("select");setPropertiesVisible(false);return}if(["INPUT","TEXTAREA","SELECT"].includes((e.target as HTMLElement).tagName))return;const ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}else if(e.key==="Delete"){run("Excluir")}else if(!ctrl&&!e.altKey&&e.shiftKey&&(e.key==="+"||e.key==="="||e.key==="-"||e.code==="Minus"||e.code==="NumpadSubtract")){e.preventDefault();setZoom(z=>Math.max(20,Math.min(160,z+((e.key==="-"||e.code==="Minus"||e.code==="NumpadSubtract")?-10:10))))}else if(!ctrl){const map:Record<string,string>={v:"select",r:"rect",o:"ellipse",l:"line",t:"text",p:"path"};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])}};window.addEventListener("keydown",fn);return()=>window.removeEventListener("keydown",fn)});
+ useEffect(()=>{const fn=(e:KeyboardEvent)=>{if(e.key==="Escape"){setRegion(null);e.preventDefault();setDimensionsOpen(false);setContext(null);setOpenMenu(null);setSelected([]);setTool("select");setPropertiesVisible(false);return}if(["INPUT","TEXTAREA","SELECT"].includes((e.target as HTMLElement).tagName))return;if(e.key.toLowerCase()==="m"&&!e.ctrlKey&&!e.metaKey){setTool(t=>t==="rect-select"?"ellipse-select":"rect-select");return}if(e.key.toLowerCase()==="w"&&!e.ctrlKey&&!e.metaKey){setTool("wand");return}const ctrl=e.ctrlKey||e.metaKey;if(ctrl&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}else if(e.key==="Delete"){run("Excluir")}else if(!ctrl&&!e.altKey&&e.shiftKey&&(e.key==="+"||e.key==="="||e.key==="-"||e.code==="Minus"||e.code==="NumpadSubtract")){e.preventDefault();setZoom(z=>Math.max(20,Math.min(160,z+((e.key==="-"||e.code==="Minus"||e.code==="NumpadSubtract")?-10:10))))}else if(!ctrl){const map:Record<string,string>={v:"select",r:"rect",o:"ellipse",l:"line",t:"text",p:"path"};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])}};window.addEventListener("keydown",fn);return()=>window.removeEventListener("keydown",fn)});
  useEffect(()=>{const beforeUnload=(e:BeforeUnloadEvent)=>{if(!dirty)return;e.preventDefault();e.returnValue=""};window.addEventListener("beforeunload",beforeUnload);return()=>window.removeEventListener("beforeunload",beforeUnload)},[dirty]);
  const shape=(o:Item)=>{const props={fill:o.fill,stroke:o.stroke,strokeWidth:o.strokeWidth};switch(o.kind){case "rect":return <rect width={o.w} height={o.h} {...props}/>;case "ellipse":return <ellipse cx={o.w/2} cy={o.h/2} rx={o.w/2} ry={o.h/2} {...props}/>;case "line":return <line x1={0} y1={0} x2={o.w} y2={o.h} {...props}/>;case "text":return <text x={0} y={o.fontSize||40} fill={o.fill} fontSize={o.fontSize||40} fontFamily="Arial">{o.text||"Texto"}</text>;case "image":return <image width={o.w} height={o.h} href={o.image} preserveAspectRatio="none"/>;case "path":return <polyline points={(o.points||[]).map(p=>p.x+","+p.y).join(" ")} fill="none" stroke={o.strokeWidth?o.stroke:o.fill} strokeWidth={Math.max(2,o.strokeWidth)}/>}}
  return <div className="studio">
